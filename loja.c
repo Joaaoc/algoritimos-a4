@@ -13,6 +13,8 @@ Produto Produtos[PRODUTOS_SZ];
 double DescontoPorcentagem = 0.9;
 int DescontoQuantidadeMinima = 3;
 
+ItensVendidos TotalItensVendidos[PRODUTOS_SZ];
+
 int main()
 {
 	Produtos[0] = criarProduto(0, "Bermuda", "Nike", 100, 10);
@@ -22,6 +24,13 @@ int main()
 	Produtos[4] = criarProduto(4, "Camisa Dryfit", "Adidas", 60, 10);
 	Produtos[5] = criarProduto(5, "Sapatenis", "Adidas", 200, 10);
 
+	for (int i = 0; i < PRODUTOS_SZ; i++)
+	{
+		TotalItensVendidos[i].produto = &Produtos[i];
+		TotalItensVendidos[i].preco = 0;
+		TotalItensVendidos[i].quantidade = 0;
+	}
+
 	while (true)
 	{
 		char continueKey;
@@ -29,7 +38,7 @@ int main()
 
 		system("cls");
 		printf("Escolha uma das opcoes abaixo \n");
-		printf("  [0] Gerar relatorio\n");
+		printf("  [0] Gerar relatorio e finalizar\n");
 		printf("  [1] Entrar na loja\n");
 		printf(">: ");
 		scanf_s("%d", &option);
@@ -42,6 +51,49 @@ int main()
 			{
 				printf("  (%d) %s -> R$%.2f\n", Clientes[i].id, Clientes[i].nome, Clientes[i].totalGasto);
 			}
+			printf("\n");
+
+			printf("* Quantidade de clientes: %d\n", ClientesSz);
+
+			double faturamentoBruto = 0;
+			int totalDeItensVendidos = 0;
+			for (int i = 0; i < PRODUTOS_SZ; i++)
+			{
+				faturamentoBruto += TotalItensVendidos[i].preco;
+				totalDeItensVendidos += TotalItensVendidos[i].quantidade;
+			}
+			printf("* Total de itens vendidos: %d\n", totalDeItensVendidos);
+			printf("* Faturamento bruto: R$%.2f\n", faturamentoBruto);
+
+			qsort((void*)TotalItensVendidos, sizeof(TotalItensVendidos) / sizeof(TotalItensVendidos[0]), sizeof(TotalItensVendidos[0]), compararItensVendidos);
+			
+			int maisVendidoQt = 0;
+			Produto* maisVendido = TotalItensVendidos[0].produto;
+			for (int i = 0; i < PRODUTOS_SZ; i++)
+			{
+				if (TotalItensVendidos[i].quantidade != 0)
+				{
+					maisVendidoQt = TotalItensVendidos[i].quantidade;
+					maisVendido = TotalItensVendidos[i].produto;
+					break;
+				}
+			}
+			printf("* Mais Vendido: %s (%s) [%d]\n", maisVendido->nome, maisVendido->marca, maisVendidoQt);
+
+			int menosVendidoQt = 0;
+			Produto* menosVendido = TotalItensVendidos[PRODUTOS_SZ-1].produto;
+			for (int i = PRODUTOS_SZ-1; i >= 0; i--)
+			{
+				if (TotalItensVendidos[i].quantidade != 0)
+				{
+					menosVendidoQt = TotalItensVendidos[i].quantidade;
+					menosVendido = TotalItensVendidos[i].produto;
+					break;
+				}
+			}
+			printf("* Menos Vendido: %s (%s) [%d]\n", menosVendido->nome, menosVendido->marca, menosVendidoQt);
+
+			return 0;
 		}
 		else if (option == 1)
 		{
@@ -63,6 +115,18 @@ int main()
 		printf("Aperte qualquer tecla para reiniciar...");
 		scanf_s(" %c", &continueKey, 1);
 	}
+}
+
+int compararItensVendidos(const void* v1, const void* v2)
+{
+	const ItensVendidos* p1 = (ItensVendidos*)v1;
+	const ItensVendidos* p2 = (ItensVendidos*)v2;
+	if (p1->quantidade > p2->quantidade)
+		return -1;
+	else if (p1->quantidade < p2->quantidade)
+		return +1;
+	else
+		return 0;
 }
 
 int compararClientesDecrescente(const void* v1, const void* v2)
@@ -178,6 +242,9 @@ bool compra()
 	{
 		if (carrinho[i].quantidade <= 0) continue;
 		cliente.totalGasto += carrinho[i].preco;
+
+		TotalItensVendidos[i].quantidade += carrinho[i].quantidade;
+		TotalItensVendidos[i].preco += carrinho[i].preco;
 	}
 	Clientes[ClientesSz] = cliente;
 	ClientesSz++;
