@@ -28,6 +28,13 @@ typedef struct _ProdutoNoCarrinho
 	double preco;
 } ProdutoNoCarrinho;
 
+typedef struct _ItensVendidos
+{
+	Produto* produto;
+	int quantidade;
+	double preco;
+} ItensVendidos;
+
 int main();
 bool compra();
 Produto criarProduto(unsigned int codigo, const char* nome, const char* marca, double preco, int quantidade);
@@ -36,3 +43,4 @@ int obterQuantidade(Produto* produto);
 void printarCarrinho(ProdutoNoCarrinho* carrinho, int produtosSz);
 time_t gerarIdCliente();
 int compararClientesDecrescente(const void* v1, const void* v2);
+int compararItensVendidos(const void* v1, const void* v2);
