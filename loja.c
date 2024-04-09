@@ -1,10 +1,54 @@
-#include "loja.h"
-
-#include <string.h>
-
 #define PRODUTOS_SZ 6
 #define CLIENTES_SZ 64
 #define STRING_SZ 64
+#define STR_SZ 1024
+
+#include <stdio.h>
+#include <stdbool.h>
+#include <time.h>
+#include <string.h>
+#include <locale.h>
+
+typedef struct _Cliente
+{
+	int id;
+	char nome[64];
+	int vendas;
+	double totalGasto;
+} Cliente;
+
+typedef struct _Produto
+{
+	unsigned int codigo;
+	char nome[64];
+	char marca[64];
+	double preco;
+	int quantidade;
+} Produto;
+
+typedef struct _ProdutoNoCarrinho
+{
+	Produto* produto;
+	int quantidade;
+	double preco;
+} ProdutoNoCarrinho;
+
+typedef struct _ItensVendidos
+{
+	Produto* produto;
+	int quantidade;
+	double preco;
+} ItensVendidos;
+
+int main();
+bool compra();
+Produto criarProduto(unsigned int codigo, const char* nome, const char* marca, double preco, int quantidade);
+int obterId(Produto* produtos, int produtosSz);
+int obterQuantidade(Produto* produto);
+void printarCarrinho(ProdutoNoCarrinho* carrinho, int produtosSz);
+time_t gerarIdCliente();
+int compararClientesDecrescente(const void* v1, const void* v2);
+int compararItensVendidos(const void* v1, const void* v2);
 
 Cliente Clientes[CLIENTES_SZ];
 int ClientesSz = 0;
@@ -17,6 +61,8 @@ ItensVendidos TotalItensVendidos[PRODUTOS_SZ];
 
 int main()
 {
+	setlocale(LC_ALL, "Portuguese");
+
 	Produtos[0] = criarProduto(0, "Bermuda", "Nike", 100, 10);
 	Produtos[1] = criarProduto(1, "Camisa Social", "Nike", 80, 10);
 	Produtos[2] = criarProduto(2, "Tenis", "Nike", 250, 10);
@@ -33,6 +79,8 @@ int main()
 
 	while (true)
 	{
+		char str[1024];
+		snprintf(str, STR_SZ, "");
 		char continueKey;
 		int option;
 
@@ -45,15 +93,16 @@ int main()
 		system("cls");
 		if (option == 0)
 		{
+			
 			qsort((void*)Clientes, sizeof(Clientes) / sizeof(Clientes[0]), sizeof(Clientes[0]), compararClientesDecrescente);
-			printf("> Total gasto por cliente: \n");
+			snprintf(str + strlen(str), STR_SZ - strlen(str), "> Total gasto por cliente: \n");
 			for (int i = 0; i < ClientesSz; i++)
 			{
-				printf("  (%d) %s -> R$%.2f\n", Clientes[i].id, Clientes[i].nome, Clientes[i].totalGasto);
+				snprintf(str + strlen(str), STR_SZ - strlen(str), "  (%d) %s -> R$%.2f\n", Clientes[i].id, Clientes[i].nome, Clientes[i].totalGasto);
 			}
-			printf("\n");
+			snprintf(str + strlen(str), STR_SZ - strlen(str), "\n");
 
-			printf("* Quantidade de clientes: %d\n", ClientesSz);
+			snprintf(str + strlen(str), STR_SZ - strlen(str), "* Quantidade de clientes: %d\n", ClientesSz);
 
 			double faturamentoBruto = 0;
 			int totalDeItensVendidos = 0;
@@ -62,8 +111,8 @@ int main()
 				faturamentoBruto += TotalItensVendidos[i].preco;
 				totalDeItensVendidos += TotalItensVendidos[i].quantidade;
 			}
-			printf("* Total de itens vendidos: %d\n", totalDeItensVendidos);
-			printf("* Faturamento bruto: R$%.2f\n", faturamentoBruto);
+			snprintf(str + strlen(str), STR_SZ - strlen(str), "* Total de itens vendidos: %d\n", totalDeItensVendidos);
+			snprintf(str + strlen(str), STR_SZ - strlen(str), "* Faturamento bruto: R$%.2f\n", faturamentoBruto);
 
 			qsort((void*)TotalItensVendidos, sizeof(TotalItensVendidos) / sizeof(TotalItensVendidos[0]), sizeof(TotalItensVendidos[0]), compararItensVendidos);
 			
@@ -78,7 +127,7 @@ int main()
 					break;
 				}
 			}
-			printf("* Mais Vendido: %s (%s) [%d]\n", maisVendido->nome, maisVendido->marca, maisVendidoQt);
+			snprintf(str + strlen(str), STR_SZ - strlen(str), "* Mais Vendido: %s (%s) [%d]\n", maisVendido->nome, maisVendido->marca, maisVendidoQt);
 
 			int menosVendidoQt = 0;
 			Produto* menosVendido = TotalItensVendidos[PRODUTOS_SZ-1].produto;
@@ -91,8 +140,16 @@ int main()
 					break;
 				}
 			}
-			printf("* Menos Vendido: %s (%s) [%d]\n", menosVendido->nome, menosVendido->marca, menosVendidoQt);
+			snprintf(str + strlen(str), STR_SZ - strlen(str), "* Menos Vendido: %s (%s) [%d]\n", menosVendido->nome, menosVendido->marca, menosVendidoQt);
 
+			snprintf(str + strlen(str), STR_SZ - strlen(str), "\n-------------------\n");
+			printf("%s", str);
+			FILE* file;
+			if (fopen_s(&file, "relatorio.dat", "a") == 0 && file != NULL)
+			{
+				fprintf(file, str);
+				fclose(file);
+			}
 			return 0;
 		}
 		else if (option == 1)
