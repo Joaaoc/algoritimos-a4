@@ -145,7 +145,7 @@ int main()
 			snprintf(str + strlen(str), STR_SZ - strlen(str), "\n-------------------\n");
 			printf("%s", str);
 			FILE* file;
-			if (fopen_s(&file, "relatorio.dat", "a") == 0 && file != NULL)
+			if (fopen_s(&file, "loja_roupa.dat", "a") == 0 && file != NULL)
 			{
 				fprintf(file, str);
 				fclose(file);
