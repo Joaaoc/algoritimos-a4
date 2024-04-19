@@ -1,51 +1,43 @@
-#define PRODUTOS_SZ 6
-#define CLIENTES_SZ 64
-#define STRING_SZ 64
-#define STR_SZ 1024
-
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
 #include <string.h>
 #include <locale.h>
 
+#define PRODUTOS_SZ 6
+#define CLIENTES_SZ 100
+#define STRING_SZ 100
+#define FILE_SZ 1024
+
 typedef struct _Cliente
 {
-	int id;
-	char nome[64];
-	int vendas;
+	unsigned int id;
+	char nome[STRING_SZ];
 	double totalGasto;
 } Cliente;
 
 typedef struct _Produto
 {
 	unsigned int codigo;
-	char nome[64];
-	char marca[64];
+	char marca[STRING_SZ];
+	char nome[STRING_SZ];
 	double preco;
 	int quantidade;
 } Produto;
 
-typedef struct _ProdutoNoCarrinho
+typedef struct _Produto2
 {
 	Produto* produto;
 	int quantidade;
 	double preco;
-} ProdutoNoCarrinho;
-
-typedef struct _ItensVendidos
-{
-	Produto* produto;
-	int quantidade;
-	double preco;
-} ItensVendidos;
+} Produto2;
 
 int main();
 bool compra();
 Produto criarProduto(unsigned int codigo, const char* nome, const char* marca, double preco, int quantidade);
 int obterId(Produto* produtos, int produtosSz);
 int obterQuantidade(Produto* produto);
-void printarCarrinho(ProdutoNoCarrinho* carrinho, int produtosSz);
+void printarCarrinho(Produto2* carrinho, int produtosSz);
 time_t gerarIdCliente();
 int compararClientesDecrescente(const void* v1, const void* v2);
 int compararItensVendidos(const void* v1, const void* v2);
@@ -57,7 +49,10 @@ Produto Produtos[PRODUTOS_SZ];
 double DescontoPorcentagem = 0.9;
 int DescontoQuantidadeMinima = 3;
 
-ItensVendidos TotalItensVendidos[PRODUTOS_SZ];
+Produto2 TotalItensVendidos[PRODUTOS_SZ];
+
+//#define SZ 1
+const int SZ = 1;
 
 int main()
 {
@@ -80,7 +75,7 @@ int main()
 	while (true)
 	{
 		char str[1024];
-		snprintf(str, STR_SZ, "");
+		snprintf(str, FILE_SZ, "");
 		char continueKey;
 		int option;
 
@@ -95,14 +90,14 @@ int main()
 		{
 			
 			qsort((void*)Clientes, sizeof(Clientes) / sizeof(Clientes[0]), sizeof(Clientes[0]), compararClientesDecrescente);
-			snprintf(str + strlen(str), STR_SZ - strlen(str), "> Total gasto por cliente: \n");
+			snprintf(str + strlen(str), FILE_SZ - strlen(str), "> Total gasto por cliente: \n");
 			for (int i = 0; i < ClientesSz; i++)
 			{
-				snprintf(str + strlen(str), STR_SZ - strlen(str), "  (%d) %s -> R$%.2f\n", Clientes[i].id, Clientes[i].nome, Clientes[i].totalGasto);
+				snprintf(str + strlen(str), FILE_SZ - strlen(str), "  (%d) %s -> R$%.2f\n", Clientes[i].id, Clientes[i].nome, Clientes[i].totalGasto);
 			}
-			snprintf(str + strlen(str), STR_SZ - strlen(str), "\n");
+			snprintf(str + strlen(str), FILE_SZ - strlen(str), "\n");
 
-			snprintf(str + strlen(str), STR_SZ - strlen(str), "* Quantidade de clientes: %d\n", ClientesSz);
+			snprintf(str + strlen(str), FILE_SZ - strlen(str), "* Quantidade de clientes: %d\n", ClientesSz);
 
 			double faturamentoBruto = 0;
 			int totalDeItensVendidos = 0;
@@ -111,8 +106,8 @@ int main()
 				faturamentoBruto += TotalItensVendidos[i].preco;
 				totalDeItensVendidos += TotalItensVendidos[i].quantidade;
 			}
-			snprintf(str + strlen(str), STR_SZ - strlen(str), "* Total de itens vendidos: %d\n", totalDeItensVendidos);
-			snprintf(str + strlen(str), STR_SZ - strlen(str), "* Faturamento bruto: R$%.2f\n", faturamentoBruto);
+			snprintf(str + strlen(str), FILE_SZ - strlen(str), "* Total de itens vendidos: %d\n", totalDeItensVendidos);
+			snprintf(str + strlen(str), FILE_SZ - strlen(str), "* Faturamento bruto: R$%.2f\n", faturamentoBruto);
 
 			qsort((void*)TotalItensVendidos, sizeof(TotalItensVendidos) / sizeof(TotalItensVendidos[0]), sizeof(TotalItensVendidos[0]), compararItensVendidos);
 			
@@ -127,7 +122,7 @@ int main()
 					break;
 				}
 			}
-			snprintf(str + strlen(str), STR_SZ - strlen(str), "* Mais Vendido: %s (%s) [%d]\n", maisVendido->nome, maisVendido->marca, maisVendidoQt);
+			snprintf(str + strlen(str), FILE_SZ - strlen(str), "* Mais Vendido: %s (%s) [%d]\n", maisVendido->nome, maisVendido->marca, maisVendidoQt);
 
 			int menosVendidoQt = 0;
 			Produto* menosVendido = TotalItensVendidos[PRODUTOS_SZ-1].produto;
@@ -140,9 +135,9 @@ int main()
 					break;
 				}
 			}
-			snprintf(str + strlen(str), STR_SZ - strlen(str), "* Menos Vendido: %s (%s) [%d]\n", menosVendido->nome, menosVendido->marca, menosVendidoQt);
+			snprintf(str + strlen(str), FILE_SZ - strlen(str), "* Menos Vendido: %s (%s) [%d]\n", menosVendido->nome, menosVendido->marca, menosVendidoQt);
 
-			snprintf(str + strlen(str), STR_SZ - strlen(str), "\n-------------------\n");
+			snprintf(str + strlen(str), FILE_SZ - strlen(str), "\n-------------------\n");
 			printf("%s", str);
 			FILE* file;
 			if (fopen_s(&file, "loja_roupa.dat", "a") == 0 && file != NULL)
@@ -150,6 +145,8 @@ int main()
 				fprintf(file, str);
 				fclose(file);
 			}
+			printf("Aperte qualquer tecla para finalizar...");
+			scanf_s("%d", &option);
 			return 0;
 		}
 		else if (option == 1)
@@ -176,8 +173,8 @@ int main()
 
 int compararItensVendidos(const void* v1, const void* v2)
 {
-	const ItensVendidos* p1 = (ItensVendidos*)v1;
-	const ItensVendidos* p2 = (ItensVendidos*)v2;
+	const Produto2* p1 = (Produto2*)v1;
+	const Produto2* p2 = (Produto2*)v2;
 	if (p1->quantidade > p2->quantidade)
 		return -1;
 	else if (p1->quantidade < p2->quantidade)
@@ -203,7 +200,7 @@ time_t gerarIdCliente()
 	return time(NULL);
 }
 
-void inicializarCarrinho(ProdutoNoCarrinho* carrinho, int size)
+void inicializarCarrinho(Produto2* carrinho, int size)
 {	
 	for (int i = 0; i < size; i++)
 	{
@@ -215,7 +212,7 @@ bool compra()
 {
 	Cliente cliente;
 	Produto* produto;
-	ProdutoNoCarrinho carrinho[PRODUTOS_SZ];
+	Produto2 carrinho[PRODUTOS_SZ];
 	int carrinhoSz = 0;
 
 	inicializarCarrinho(carrinho, PRODUTOS_SZ);
@@ -230,7 +227,7 @@ bool compra()
 
 	while (true)
 	{
-		ProdutoNoCarrinho produto2;
+		Produto2 produto2;
 
 		int idProduto = obterId(Produtos, PRODUTOS_SZ);
 		if (idProduto == 8)
@@ -349,12 +346,12 @@ int obterQuantidade(Produto* produto)
 	return quantidade;
 }
 
-void printarCarrinho(ProdutoNoCarrinho* carrinho, int produtosSz)
+void printarCarrinho(Produto2* carrinho, int produtosSz)
 {
 	printf("> Carrinho\n");
 	for (int i = 0; i < produtosSz; i++)
 	{
-		ProdutoNoCarrinho* produto2 = &carrinho[i];
+		Produto2* produto2 = &carrinho[i];
 		if (!produto2 || !produto2->produto) { continue; }
 		if (produto2->quantidade <= 0) { continue; }
 		printf("  '%s (%s)'-> R$%.2f (%dx %.2f)", produto2->produto->nome, produto2->produto->marca, produto2->preco, produto2->quantidade, produto2->produto->preco);
